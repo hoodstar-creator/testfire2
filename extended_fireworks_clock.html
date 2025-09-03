@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>디컨 디지털 시계</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #2d3b4f 0%, #1e293b 50%, #334155 100%);
+            background-size: 400% 400%;
+            animation: subtleShift 12s ease infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 75% 75%, rgba(147, 197, 253, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        @keyframes subtleShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .clock-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px 50px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        
+        .control-buttons {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 8px 16px;
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+        
+        .btn.test-btn {
+            background: rgba(255, 100, 100, 0.15);
+            border: 1px solid rgba(255, 100, 100, 0.2);
+            color: #ff9999;
+        }
+        
+        .btn.test-btn:hover {
+            background: rgba(255, 100, 100, 0.25);
+            color: #ffaaaa;
+        }
+        
+        .digital-time {
+            color: #e2e8f0;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 84px;
+            font-weight: 300;
+            text-align: center;
+            letter-spacing: -2px;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        
+        .am-pm {
+            font-size: 28px;
+            color: #64748b;
+            font-weight: 400;
+            margin-left: 12px;
+            vertical-align: top;
+            margin-top: 8px;
+            display: inline-block;
+        }
+        
+        .time-separator {
+            color: #64748b;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 0.3; }
+        }
+        
+        .date-display {
+            color: #94a3b8;
+            font-size: 18px;
+            font-weight: 400;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        
+        .format-indicator {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* 불꽃놀이 애니메이션 */
+        .fireworks-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease;
+        }
+        
+        .fireworks-container.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+        }
+        
+        @keyframes explode {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(30);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes sparkle {
+            0%, 100% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1) rotate(180deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(0) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .celebration-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        .celebration-message.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translate(-50%, -50%) translateY(0);
+            }
+            40% {
+                transform: translate(-50%, -50%) translateY(-20px);
+            }
+            60% {
+                transform: translate(-50%, -50%) translateY(-10px);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .digital-time {
+                font-size: 64px;
+            }
+            
+            .clock-container {
+                padding: 30px 35px;
+                margin: 20px;
+            }
+            
+            .control-buttons {
+                top: 20px;
+                right: 20px;
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .format-indicator {
+                bottom: 15px;
+                right: 20px;
+            }
+            
+            .celebration-message {
+                font-size: 32px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .digital-time {
+                font-size: 48px;
+                letter-spacing: -1px;
+            }
+            
+            .am-pm {
+                font-size: 20px;
+                margin-top: 6px;
+            }
+            
+            .clock-container {
+                padding: 25px 30px;
+            }
+            
+            .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            .celebration-message {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="control-buttons">
+        <div class="btn test-btn" id="testFireworks"></div>
+        <div class="btn" id="fullscreenToggle">전체화면</div>
+        <div class="btn" id="formatToggle">12시간 형식</div>
+    </div>
+    
+    <div class="clock-container">
+        <div class="digital-time" id="digitalTime"></div>
+        <div class="date-display" id="dateDisplay"></div>
+    </div>
+    
+    <div class="format-indicator" id="formatIndicator">24H</div>
+    
+    <div class="fireworks-container" id="fireworksContainer"></div>
+    <div class="celebration-message" id="celebrationMessage">🎉 9모 수고하셨습니다! 🎉</div>
+
+    <script>
+        let is24Hour = true;
+        let hasTriggeredFireworks = false;
+        let lastMinute = -1;
+        let fireworksInterval = null;
+        let fireworksTimeout = null;
+        
+        function toggleTimeFormat() {
+            is24Hour = !is24Hour;
+            const toggle = document.getElementById('formatToggle');
+            const indicator = document.getElementById('formatIndicator');
+            
+            if (is24Hour) {
+                toggle.textContent = '12시간 형식';
+                indicator.textContent = '24H';
+            } else {
+                toggle.textContent = '24시간 형식';
+                indicator.textContent = '12H';
+            }
+            
+            updateClock();
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('전체화면 모드를 지원하지 않습니다.');
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+        
+        function createFirework(x, y, color) {
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            firework.style.left = x + 'px';
+            firework.style.top = y + 'px';
+            firework.style.backgroundColor = color;
+            firework.style.boxShadow = `0 0 10px ${color}`;
+            firework.style.animation = 'explode 2s ease-out forwards';
+            
+            document.getElementById('fireworksContainer').appendChild(firework);
+            
+            // 스파클 효과 추가
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'firework';
+                    sparkle.style.left = (x + (Math.random() - 0.5) * 200) + 'px';
+                    sparkle.style.top = (y + (Math.random() - 0.5) * 200) + 'px';
+                    sparkle.style.backgroundColor = color;
+                    sparkle.style.animation = 'sparkle 1.5s ease-out forwards';
+                    document.getElementById('fireworksContainer').appendChild(sparkle);
+                    
+                    setTimeout(() => {
+                        if (sparkle.parentNode) {
+                            sparkle.parentNode.removeChild(sparkle);
+                        }
+                    }, 1500);
+                }, Math.random() * 500);
+            }
+            
+            setTimeout(() => {
+                if (firework.parentNode) {
+                    firework.parentNode.removeChild(firework);
+                }
+            }, 2000);
+        }
+        
+        function startContinuousFireworks() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd', '#98d8c8'];
+            
+            // 불꽃놀이를 계속 생성하는 인터벌 (매 300ms마다 새로운 불꽃)
+            fireworksInterval = setInterval(() => {
+                // 동시에 2-3개의 불꽃 생성
+                const numFireworks = Math.floor(Math.random() * 2) + 2;
+                for (let i = 0; i < numFireworks; i++) {
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight * 0.7;
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    createFirework(x, y, color);
+                }
+            }, 300);
+        }
+        
+        function stopFireworks() {
+            if (fireworksInterval) {
+                clearInterval(fireworksInterval);
+                fireworksInterval = null;
+            }
+            if (fireworksTimeout) {
+                clearTimeout(fireworksTimeout);
+                fireworksTimeout = null;
+            }
+            
+            const container = document.getElementById('fireworksContainer');
+            const message = document.getElementById('celebrationMessage');
+            container.classList.remove('active');
+            message.classList.remove('active');
+        }
+        
+        function triggerFireworks() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd', '#98d8c8'];
+            const container = document.getElementById('fireworksContainer');
+            const message = document.getElementById('celebrationMessage');
+            
+            container.classList.add('active');
+            message.classList.add('active');
+            
+            // 초기 불꽃놀이 버스트 (시작할 때 더 화려하게)
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight * 0.7;
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    createFirework(x, y, color);
+                }, Math.random() * 1000);
+            }
+            
+            // 연속 불꽃놀이 시작
+            setTimeout(() => {
+                startContinuousFireworks();
+            }, 1000);
+            
+            // 2분(120초) 후 불꽃놀이 종료
+            fireworksTimeout = setTimeout(() => {
+                stopFireworks();
+            }, 120000); // 120,000ms = 2분
+        }
+        
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            
+            // 9시 10분 5초에 불꽃놀이 트리거
+            if (minutes !== lastMinute) {
+                lastMinute = minutes;
+                hasTriggeredFireworks = false;
+            }
+            
+            if (hours === 9 && minutes === 10 && seconds === 5 && !hasTriggeredFireworks) {
+                triggerFireworks();
+                hasTriggeredFireworks = true;
+            }
+            
+            if (hours === 21 && minutes === 10 && seconds === 5 && !hasTriggeredFireworks) {
+                triggerFireworks();
+                hasTriggeredFireworks = true;
+            }
+            
+            let timeString;
+            let ampm = '';
+            
+            if (is24Hour) {
+                timeString = `${hours.toString().padStart(2, '0')}<span class="time-separator">:</span>${minutes.toString().padStart(2, '0')}<span class="time-separator">:</span>${seconds.toString().padStart(2, '0')}`;
+            } else {
+                ampm = hours >= 12 ? 'PM' : 'AM';
+                const displayHours = hours % 12;
+                const finalHours = displayHours ? displayHours : 12;
+                timeString = `${finalHours.toString().padStart(2, '0')}<span class="time-separator">:</span>${minutes.toString().padStart(2, '0')}<span class="time-separator">:</span>${seconds.toString().padStart(2, '0')}<span class="am-pm">${ampm}</span>`;
+            }
+            
+            document.getElementById('digitalTime').innerHTML = timeString;
+            
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                weekday: 'long' 
+            };
+            const dateString = now.toLocaleDateString('ko-KR', options);
+            document.getElementById('dateDisplay').textContent = dateString;
+        }
+        
+        // 전체화면 상태 변경 감지
+        document.addEventListener('fullscreenchange', () => {
+            const toggle = document.getElementById('fullscreenToggle');
+            if (document.fullscreenElement) {
+                toggle.textContent = '전체화면 해제';
+            } else {
+                toggle.textContent = '전체화면';
+            }
+        });
+        
+        // 이벤트 리스너
+        document.getElementById('formatToggle').addEventListener('click', toggleTimeFormat);
+        document.getElementById('fullscreenToggle').addEventListener('click', toggleFullscreen);
+        document.getElementById('testFireworks').addEventListener('click', triggerFireworks);
+        
+        // 초기화
+        updateClock();
+        
+        // 1초마다 업데이트
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
